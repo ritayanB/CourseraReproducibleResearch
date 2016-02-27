@@ -1,0 +1,129 @@
+---
+title: 'Coursera Reproducible Research: Final Assignment'
+author: "Ritayan B"
+date: "25 February 2016"
+output: html_document
+
+---
+
+#Some meta Information
+
+Date when data is downloaded - 26-February-2016
+
+The file was downloaded from the location https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2
+
+National Weather Service Storm Data Documentation https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf
+National Climatic Data Center Storm Events FAQ
+https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf
+
+The machine used for the analysis had a the folowing configuration
+
+<img src="D:\\system.png" />
+
+Setting the initial parameters to setting the working directory, download the file, and store in the working directory 
+
+```{r, echo=TRUE}
+wdir <- "D:/Cloud Storage/Google Drive/Coursera/03. Data Science/05. Reproducible Research"
+url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+
+data.file <- paste(wdir, "/data.csv.bz2", sep = "")
+#download.file(url = url, destfile = data.file)
+setwd(wdir)
+data.storm <- read.csv(bzfile(data.file))
+event.count <- 5
+
+```
+##Question 1: Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+Using the package dplyr, we are summarizing the data. 
+The data are grouped by event type (EVTYPE). Both fatatalities(FATALITIES) and injuries(INJURIES) are summed up.
+As we understand, both these types of data contribute towards the population health.
+
+```{r}
+library(dplyr)
+library(ggplot2)
+data.health <- data.storm %>% group_by(EVTYPE) %>% summarise(ALL.FATALITIES = sum(FATALITIES), ALL.INJURIES = sum(INJURIES)) %>% arrange(desc(ALL.FATALITIES+ALL.INJURIES))
+
+```
+
+Picking the top event types for which the casualities are maximum; number determined by the summation of fatalities and injuries
+The data are tranformed so that couple of facets are created, one for fatalities and another for injuries. The plot is created using ggplot2 package.
+
+```{r}
+data.show <- data.health[1:event.count, ]
+a <- data.frame(data.show$ALL.FATALITIES, data.show$EVTYPE, "Fatalities")
+b <- data.frame(data.show$ALL.INJURIES, data.show$EVTYPE, "Injuries")
+names(a) <- c("Count", "EventType", "ImpactType")
+names(b) <- c("Count", "EventType", "ImpactType")
+data.plot1 <- rbind(a, b)
+
+```
+
+Data transformation is done. Now plot is created to show the data.
+
+```{r}
+g <- ggplot(data = data.plot1, mapping = aes(x = factor(EventType, levels = EventType), y = Count)) 
+g <- g + geom_bar(stat = "identity") + facet_grid(ImpactType~.,  scale="free")
+g <- g + ggtitle("Top events resulting maximum harm to population health")
+g <- g + labs(x = "Storm Event", y = "Casualities")
+g
+```
+
+
+##Question 2: Across the United States, which types of events have the greatest economic consequences?
+
+We are writing a function to calclate the dollar value of the crop or property damage. This will calculate the number figure based on the expression (PROPDMGEXP/ CROPDMGEXP).
+
+```{r}
+data.ecoloss <- data.storm[data.storm$PROPDMG > 0 & data.storm$CROPDMG > 0, ]
+
+caclculateVal <- function(value, symbol){
+  multiplr <- 1
+  if(symbol == "K" || symbol == "k"){
+    multiplr <- 10^3;
+  }else if(symbol == "M" || symbol == "m"){
+    multiplr <- 10^6;
+  }else if(symbol == "B" || symbol == "b"){
+    multiplr <- 10^9;
+  }
+  value * multiplr;
+}
+
+```
+
+
+```{r}
+
+data.ecoloss <- data.storm[data.storm$PROPDMG > 0 & data.storm$CROPDMG > 0, ]
+data.ecoloss <- mutate(data.ecoloss, PORPLOSS = caclculateVal(data.ecoloss$PROPDMG, data.ecoloss$PROPDMGEXP),                                      CROPLOSS = caclculateVal(data.ecoloss$CROPDMG, data.ecoloss$CROPDMGEXP)) 
+data.ecoloss <- group_by(data.ecoloss, EVTYPE) 
+data.ecoloss <- summarise(data.ecoloss, ALL.PORPLOSS = sum(PORPLOSS), ALL.CROPLOSS = sum(CROPLOSS))
+data.ecoloss <- arrange(data.ecoloss, desc(ALL.PORPLOSS + ALL.CROPLOSS))
+```
+
+
+```{r}
+data.show <- data.ecoloss[1:event.count, ]
+a <- data.frame(data.show$ALL.PORPLOSS, data.show$EVTYPE, "Property Loss")
+b <- data.frame(data.show$ALL.CROPLOSS, data.show$EVTYPE, "Crop Loss")
+names(a) <- c("Loss", "EventType", "LossType")
+names(b) <- c("Loss", "EventType", "LossType")
+data.plot2 <- rbind(a, b)
+```
+
+```{r, out.width = '1600px', out.height = '500px'}
+g <- ggplot(data = data.plot2, mapping = aes(x = factor(EventType, levels = EventType), y = Loss)) 
+g <- g + geom_bar(stat = "identity") + facet_grid(LossType~.,  scale="free")
+g <- g + ggtitle("Top events resulting maximum economic loss")
+g <- g + labs(x = "Storm Event", y = "Loss in $")
+g
+```
+
+
+
+
+
+
+
+
+
