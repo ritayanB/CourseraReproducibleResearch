@@ -3,12 +3,12 @@ title: 'Coursera Reproducible Research: Final Assignment'
 author: "Ritayan B"
 date: "25 February 2016"
 output: html_document
-
+keep_md: yes
 ---
 
 #Some meta Information
 
-Date when data is downloaded - 26-February-2016
+Data downloaded on - 26-February-2016
 
 The file was downloaded from the location https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2
 
@@ -18,12 +18,12 @@ https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Event
 
 The machine used for the analysis had a the folowing configuration
 
-<img src="D:\\system.png" />
+<img src="https://github.com/ritayanB/CourseraReproducibleResearch/blob/master/system.png" />
 
 Setting the initial parameters to setting the working directory, download the file, and store in the working directory 
 
 ```{r, echo=TRUE}
-wdir <- "D:/Cloud Storage/Google Drive/Coursera/03. Data Science/05. Reproducible Research"
+wdir <- "D:/Cloud Storage/Google Drive/Coursera/03. Data Science/05. Reproducible Research/CourseraReproducibleResearch"
 url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
 
 data.file <- paste(wdir, "/data.csv.bz2", sep = "")
@@ -79,15 +79,16 @@ data.ecoloss <- data.storm[data.storm$PROPDMG > 0 & data.storm$CROPDMG > 0, ]
 
 caclculateVal <- function(value, symbol){
   multiplr <- 1
-  if(symbol == "K" || symbol == "k"){
+  if(toupper(symbol) == "K"){
     multiplr <- 10^3;
-  }else if(symbol == "M" || symbol == "m"){
+  }else if(toupper(symbol) == "M"){
     multiplr <- 10^6;
-  }else if(symbol == "B" || symbol == "b"){
+  }else if(toupper(symbol) == "B"){
     multiplr <- 10^9;
   }
   value * multiplr;
 }
+
 
 ```
 
